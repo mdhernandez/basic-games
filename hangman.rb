@@ -42,6 +42,7 @@ class Hangman
   
   def game 
     #puts @solution #testing purposes
+	puts "You can save at anytime by entering the word 'save'."
 	game_status
 	
 	while @wrong_guesses > 0
