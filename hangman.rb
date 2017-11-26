@@ -1,4 +1,6 @@
-class Hangman
+require "yaml"
+
+class Hangman 
   @solution
   @misses
   @wrong_guesses
@@ -8,7 +10,7 @@ class Hangman
     @solution = file_ops
 	@misses = []
 	@wrong_guesses = guess
-	r = @solution.size - 1
+	r = @solution.size
 	@word = Array.new(r, "_")
   end
 
@@ -16,6 +18,7 @@ class Hangman
      words = File.readlines "5desk.txt"
 	 arr = []
 	 words.each do |w|
+	   w.strip!
 	   if (w.size >= 5 || w.size <=12)
 	     arr.push(w)
 	   end
@@ -25,18 +28,30 @@ class Hangman
 	 return word
   end
   
- def print_word
-   word_str = @word.join(" ")
-   puts word_str
- end
+  def print_word
+    word_str = @word.join(" ")
+    puts word_str
+  end
+ 
+   def game_status
+     print_word
+	 print "Wrong Letters: "
+	 puts @misses.inspect
+	 puts "Mistakes before Hanged: #{@wrong_guesses}"
+   end
   
-  def game
-    puts @solution #testing purposes
+  def game 
+    #puts @solution #testing purposes
+	game_status
 	
 	while @wrong_guesses > 0
 	  wrong = true
 	  puts "Guess a letter:"
 	  letter = gets.chomp
+	  if letter.downcase == "save"
+	    save_game
+		return
+	  end
 	  if letter.size > 1
 	    letter = letter[0]
 	  end
@@ -46,7 +61,7 @@ class Hangman
 	    if @solution[i].downcase == letter
 		  
 		  if @solution[i] < letter
-		    letter = letter - 32
+		    letter.upcase!
 		  end
 		  @word[i] = letter
 		  wrong = false
@@ -61,7 +76,7 @@ class Hangman
 	    @wrong_guesses -= 1
 	  end
 	  
-	  if @solution.strip == @word.join.to_s
+	  if @solution == @word.join.to_s
 	  puts
 	    puts "YOU WIN!"
 		@wrong_guesses = -1
@@ -69,23 +84,52 @@ class Hangman
 	  
 	  if @wrong_guesses == 0
 	    puts
-	    #puts @word.join.to_s#testing purposes
 	    puts "Sorry you lose. The word was:"
 		puts @solution
 	  elsif @wrong_guesses > 0
-	    print_word
-	    print "Wrong Letters: "
-	    puts @misses.inspect
-	    puts "Mistakes before Hanged: #{@wrong_guesses}"
+	    game_status
 	  end
 	end
-  end#end game
+  end
+  
+  def save_game
+    save_data = YAML::dump(self)
+	aFile = File.open("save_data/save_data.txt", "w")
+	aFile.syswrite(save_data)
+  end
+  
+  def load_game
+    aFile = File.open("save_data/save_data.txt", "r")
+	
+    if (!(File.exists?(aFile))) ||  File.zero?(aFile)
+	  puts "No save exists."
+	  return nil
+	end
+	
+	save_data = YAML::load(aFile)
+	return save_data
+  end
   
 end
 
 def play
   hang = Hangman.new
-  hang.game
+  puts "1) New Game"
+  puts "2) Continue"
+  choice = gets.chomp.to_i
+  
+  case choice
+  when 1
+    hang.game
+  when 2
+    save = hang.load_game
+	if save
+	  save.game
+	else
+	end
+  else
+    return nil
+  end
 end
 
 play
